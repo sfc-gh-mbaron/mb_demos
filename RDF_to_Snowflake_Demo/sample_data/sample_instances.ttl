@@ -1,0 +1,96 @@
+# Sample E-commerce Data Instances
+@prefix ex: <http://example.com/ecommerce#> .
+@prefix inst: <http://example.com/instances#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Category instances
+inst:electronics rdf:type ex:Category ;
+    ex:categoryName "Electronics" .
+
+inst:computers rdf:type ex:Category ;
+    ex:categoryName "Computers" ;
+    ex:parentCategory inst:electronics .
+
+inst:laptops rdf:type ex:Category ;
+    ex:categoryName "Laptops" ;
+    ex:parentCategory inst:computers .
+
+inst:accessories rdf:type ex:Category ;
+    ex:categoryName "Accessories" ;
+    ex:parentCategory inst:electronics .
+
+# Supplier instances
+inst:supplier1 rdf:type ex:Supplier ;
+    rdfs:label "TechCorp Inc." .
+
+inst:supplier2 rdf:type ex:Supplier ;
+    rdfs:label "GadgetPro Ltd." .
+
+# Product instances
+inst:product1 rdf:type ex:Product ;
+    ex:productId "PROD-001" ;
+    ex:productName "UltraBook Pro 15" ;
+    ex:price "1299.99"^^xsd:decimal ;
+    ex:stockQuantity "25"^^xsd:integer ;
+    ex:belongsToCategory inst:laptops ;
+    ex:suppliedBy inst:supplier1 .
+
+inst:product2 rdf:type ex:Product ;
+    ex:productId "PROD-002" ;
+    ex:productName "Wireless Mouse" ;
+    ex:price "29.99"^^xsd:decimal ;
+    ex:stockQuantity "150"^^xsd:integer ;
+    ex:belongsToCategory inst:accessories ;
+    ex:suppliedBy inst:supplier2 .
+
+inst:product3 rdf:type ex:Product ;
+    ex:productId "PROD-003" ;
+    ex:productName "Gaming Laptop X1" ;
+    ex:price "1899.99"^^xsd:decimal ;
+    ex:stockQuantity "10"^^xsd:integer ;
+    ex:belongsToCategory inst:laptops ;
+    ex:suppliedBy inst:supplier1 .
+
+# Customer instances
+inst:customer1 rdf:type ex:Customer ;
+    ex:customerName "John Smith" ;
+    ex:email "john.smith@email.com" .
+
+inst:customer2 rdf:type ex:Customer ;
+    ex:customerName "Sarah Johnson" ;
+    ex:email "sarah.johnson@email.com" .
+
+# Order instances
+inst:order1 rdf:type ex:Order ;
+    ex:orderDate "2024-01-15T10:30:00"^^xsd:dateTime ;
+    ex:orderTotal "1329.98"^^xsd:decimal ;
+    ex:placedBy inst:customer1 .
+
+inst:order2 rdf:type ex:Order ;
+    ex:orderDate "2024-01-16T14:45:00"^^xsd:dateTime ;
+    ex:orderTotal "1899.99"^^xsd:decimal ;
+    ex:placedBy inst:customer2 .
+
+# Order item instances
+inst:orderitem1 rdf:type ex:OrderItem ;
+    ex:quantity "1"^^xsd:integer ;
+    ex:unitPrice "1299.99"^^xsd:decimal ;
+    ex:orderItemProduct inst:product1 .
+
+inst:orderitem2 rdf:type ex:OrderItem ;
+    ex:quantity "1"^^xsd:integer ;
+    ex:unitPrice "29.99"^^xsd:decimal ;
+    ex:orderItemProduct inst:product2 .
+
+inst:orderitem3 rdf:type ex:OrderItem ;
+    ex:quantity "1"^^xsd:integer ;
+    ex:unitPrice "1899.99"^^xsd:decimal ;
+    ex:orderItemProduct inst:product3 .
+
+# Order contains order items
+inst:order1 ex:contains inst:orderitem1 ;
+           ex:contains inst:orderitem2 .
+
+inst:order2 ex:contains inst:orderitem3 .

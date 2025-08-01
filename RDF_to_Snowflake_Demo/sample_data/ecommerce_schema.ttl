@@ -1,0 +1,119 @@
+# E-commerce RDF Schema in Turtle format
+@prefix ex: <http://example.com/ecommerce#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+# Domain Classes
+ex:Product rdf:type rdfs:Class ;
+    rdfs:label "Product" ;
+    rdfs:comment "A product available for purchase" .
+
+ex:Category rdf:type rdfs:Class ;
+    rdfs:label "Category" ;
+    rdfs:comment "A product category" .
+
+ex:Customer rdf:type rdfs:Class ;
+    rdfs:label "Customer" ;
+    rdfs:comment "A customer who can place orders" .
+
+ex:Order rdf:type rdfs:Class ;
+    rdfs:label "Order" ;
+    rdfs:comment "A purchase order" .
+
+ex:OrderItem rdf:type rdfs:Class ;
+    rdfs:label "Order Item" ;
+    rdfs:comment "An individual item within an order" .
+
+ex:Supplier rdf:type rdfs:Class ;
+    rdfs:label "Supplier" ;
+    rdfs:comment "A product supplier" .
+
+# Data Properties
+ex:productId rdf:type rdf:Property ;
+    rdfs:label "Product ID" ;
+    rdfs:domain ex:Product ;
+    rdfs:range xsd:string .
+
+ex:productName rdf:type rdf:Property ;
+    rdfs:label "Product Name" ;
+    rdfs:domain ex:Product ;
+    rdfs:range xsd:string .
+
+ex:price rdf:type rdf:Property ;
+    rdfs:label "Price" ;
+    rdfs:domain ex:Product ;
+    rdfs:range xsd:decimal .
+
+ex:stockQuantity rdf:type rdf:Property ;
+    rdfs:label "Stock Quantity" ;
+    rdfs:domain ex:Product ;
+    rdfs:range xsd:integer .
+
+ex:categoryName rdf:type rdf:Property ;
+    rdfs:label "Category Name" ;
+    rdfs:domain ex:Category ;
+    rdfs:range xsd:string .
+
+ex:customerName rdf:type rdf:Property ;
+    rdfs:label "Customer Name" ;
+    rdfs:domain ex:Customer ;
+    rdfs:range xsd:string .
+
+ex:email rdf:type rdf:Property ;
+    rdfs:label "Email" ;
+    rdfs:domain ex:Customer ;
+    rdfs:range xsd:string .
+
+ex:orderDate rdf:type rdf:Property ;
+    rdfs:label "Order Date" ;
+    rdfs:domain ex:Order ;
+    rdfs:range xsd:dateTime .
+
+ex:orderTotal rdf:type rdf:Property ;
+    rdfs:label "Order Total" ;
+    rdfs:domain ex:Order ;
+    rdfs:range xsd:decimal .
+
+ex:quantity rdf:type rdf:Property ;
+    rdfs:label "Quantity" ;
+    rdfs:domain ex:OrderItem ;
+    rdfs:range xsd:integer .
+
+ex:unitPrice rdf:type rdf:Property ;
+    rdfs:label "Unit Price" ;
+    rdfs:domain ex:OrderItem ;
+    rdfs:range xsd:decimal .
+
+# Object Properties (Relationships)
+ex:belongsToCategory rdf:type rdf:Property ;
+    rdfs:label "belongs to category" ;
+    rdfs:domain ex:Product ;
+    rdfs:range ex:Category .
+
+ex:suppliedBy rdf:type rdf:Property ;
+    rdfs:label "supplied by" ;
+    rdfs:domain ex:Product ;
+    rdfs:range ex:Supplier .
+
+ex:placedBy rdf:type rdf:Property ;
+    rdfs:label "placed by" ;
+    rdfs:domain ex:Order ;
+    rdfs:range ex:Customer .
+
+ex:contains rdf:type rdf:Property ;
+    rdfs:label "contains" ;
+    rdfs:domain ex:Order ;
+    rdfs:range ex:OrderItem .
+
+ex:orderItemProduct rdf:type rdf:Property ;
+    rdfs:label "order item product" ;
+    rdfs:domain ex:OrderItem ;
+    rdfs:range ex:Product .
+
+# Hierarchical relationships
+ex:parentCategory rdf:type rdf:Property ;
+    rdfs:label "parent category" ;
+    rdfs:domain ex:Category ;
+    rdfs:range ex:Category .
