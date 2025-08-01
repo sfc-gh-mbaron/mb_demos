@@ -90,7 +90,7 @@ execute_sql_file "sql/01_setup_environment.sql" "Environment Setup"
 
 # Step 3: Run the complete demo
 echo -e "${BLUE}=== STEP 3: Running Complete Demo ===${NC}"
-execute_sql_file "run_complete_demo.sql" "Complete Demo Execution"
+execute_sql_file "scripts/run_complete_demo.sql" "Complete Demo Execution"
 
 # Step 4: Load advanced features (optional)
 echo -e "${BLUE}=== STEP 4: Setting up Advanced Features ===${NC}"

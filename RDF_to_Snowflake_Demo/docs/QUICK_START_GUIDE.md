@@ -28,7 +28,7 @@ This demo showcases a complete solution for converting RDF (Resource Description
 ### Step 1: Execute the Complete Demo
 ```sql
 -- Run the complete demo script
-@RDF_to_Snowflake_Demo/run_complete_demo.sql
+@RDF_to_Snowflake_Demo/scripts/run_complete_demo.sql
 ```
 
 ### Step 2: Execute the Python UDFs (if not automated)

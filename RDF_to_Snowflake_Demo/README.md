@@ -226,21 +226,25 @@ RDF_to_Snowflake_Demo/
 │   ├── advanced_features.sql        # Advanced capabilities
 │   ├── data_loading_example.sql     # Data loading examples
 │   └── cortex_analyst_semantic_queries.md # Natural language queries
-├── deploy_to_snowflake.sh          # Automated deployment script
-├── deploy_via_snowsight.sql        # Manual deployment for Snowsight
-├── cleanup_demo.sql                # Cleanup script
-└── run_complete_demo.sql           # One-click complete demo
+├── scripts/                         # Deployment and utility scripts
+│   ├── deploy_to_snowflake.sh     # Automated deployment script
+│   ├── deploy_via_snowsight.sql   # Manual deployment for Snowsight
+│   ├── cleanup_demo.sql           # Cleanup script
+│   └── run_complete_demo.sql      # One-click complete demo
+└── docs/                          # Additional documentation
+    ├── DEPLOYMENT_GUIDE.md        # Detailed deployment instructions
+    └── QUICK_START_GUIDE.md       # 5-minute quick start
 ```
 
 ## Deployment Options
 
 ### Option 1: Automated Deployment
 ```bash
-./deploy_to_snowflake.sh
+./scripts/deploy_to_snowflake.sh
 ```
 
 ### Option 2: Manual Deployment via Snowsight
-Follow the instructions in `deploy_via_snowsight.sql`
+Follow the instructions in `scripts/deploy_via_snowsight.sql`
 
 ### Option 3: Step-by-step Deployment
 Follow the individual steps in this README
@@ -250,7 +254,7 @@ Follow the individual steps in this README
 To remove all demo objects from your Snowflake account:
 
 ```bash
-snowsql -f cleanup_demo.sql
+snowsql -f scripts/cleanup_demo.sql
 ```
 
 ## What Makes This Demo Special

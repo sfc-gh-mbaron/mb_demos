@@ -39,7 +39,7 @@ Edit the deployment script with your Snowflake details:
 
 ```bash
 cd RDF_to_Snowflake_Demo
-nano deploy_to_snowflake.sh  # or use your preferred editor
+nano scripts/deploy_to_snowflake.sh  # or use your preferred editor
 ```
 
 Update these variables:
@@ -54,7 +54,7 @@ SNOWFLAKE_WAREHOUSE="RDF_DEMO_WH"           # Warehouse to create
 ### Step 2: Run the Deployment Script
 
 ```bash
-./deploy_to_snowflake.sh
+./scripts/deploy_to_snowflake.sh
 ```
 
 The script will:
@@ -129,7 +129,7 @@ snowsql -c demo -f python_udfs/semantic_view_generator_udf.sql
 snowsql -c demo -f python_udfs/rdf_data_loader_udf.sql
 
 # Run complete demo
-snowsql -c demo -f run_complete_demo.sql
+snowsql -c demo -f scripts/run_complete_demo.sql
 ```
 
 ---
