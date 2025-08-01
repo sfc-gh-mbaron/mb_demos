@@ -71,7 +71,7 @@ Update your Snowflake connection details. You can either:
 snowsql --config-file config.ini
 ```
 
-**Option B: Set environment variables**
+**Option B: Set environment variables (Recommended for MFA users)**
 ```bash
 export SNOWSQL_ACCOUNT=<your-account>
 export SNOWSQL_USER=<your-username>
@@ -82,6 +82,8 @@ export SNOWSQL_SCHEMA=<your-schema>
 export SNOWSQL_WAREHOUSE=<your-warehouse>
 ```
 
+**🔐 For MFA Users**: If you have MFA enabled, see the [MFA Caching Guide](MFA_CACHING_GUIDE.md) to enable token caching and reduce authentication prompts during demo execution.
+
 ### Step 3: Set Up Snowflake Environment
 
 Run the setup script to create the necessary database, schema, and supporting objects:
@@ -91,6 +93,16 @@ snowsql -f sql/01_setup_environment.sql
 ```
 
 ## Demo Steps
+
+### Step 0: Enable MFA Token Caching (Optional but Recommended)
+
+For users with MFA enabled, reduce authentication prompts by enabling token caching:
+
+```bash
+snowsql -f setup_mfa_caching.sql
+```
+
+This enables MFA token caching for up to 4 hours, significantly reducing MFA prompts during demo execution.
 
 ### Step 1: Deploy Python UDFs
 
@@ -196,8 +208,10 @@ RDF_to_Snowflake_Demo/
 ├── README.md                          # This file
 ├── LICENSE                            # Apache 2.0 license
 ├── LEGAL.md                          # Legal notices
+├── MFA_CACHING_GUIDE.md              # MFA token caching configuration
 ├── environment.yml                    # Conda environment
 ├── requirements.txt                   # Python requirements
+├── setup_mfa_caching.sql             # MFA caching setup script
 ├── images/                           # Documentation assets
 ├── sample_data/                      # Sample RDF schemas and data
 │   ├── ecommerce_schema.ttl         # E-commerce schema in Turtle

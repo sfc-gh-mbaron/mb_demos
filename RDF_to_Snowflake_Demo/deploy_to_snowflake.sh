@@ -7,12 +7,12 @@ echo "=== RDF to Snowflake Demo Deployment Script ==="
 echo "This script will deploy the demo to your Snowflake account"
 echo
 
-# Configuration variables - UPDATE THESE WITH YOUR DETAILS
-SNOWFLAKE_ACCOUNT="your-account-identifier"  # e.g., abc12345.us-east-1
-SNOWFLAKE_USER="your-username"               # Your Snowflake username
-SNOWFLAKE_DATABASE="RDF_SEMANTIC_DB"        # Database to create/use
-SNOWFLAKE_SCHEMA="SEMANTIC_VIEWS"           # Schema to create/use
-SNOWFLAKE_WAREHOUSE="RDF_DEMO_WH"           # Warehouse to create/use
+# Configuration variables - Set via environment variables or update these
+SNOWFLAKE_ACCOUNT="${SNOWSQL_ACCOUNT:-your-account-identifier}"  # e.g., abc12345.us-east-1
+SNOWFLAKE_USER="${SNOWSQL_USER:-your-username}"                  # Your Snowflake username
+SNOWFLAKE_DATABASE="${SNOWSQL_DATABASE:-RDF_SEMANTIC_DB}"        # Database to create/use
+SNOWFLAKE_SCHEMA="${SNOWSQL_SCHEMA:-SEMANTIC_VIEWS}"             # Schema to create/use
+SNOWFLAKE_WAREHOUSE="${SNOWSQL_WAREHOUSE:-RDF_DEMO_WH}"          # Warehouse to create/use
 
 # Color coding for output
 RED='\033[0;31m'
@@ -78,6 +78,11 @@ fi
 echo -e "${GREEN}Starting deployment...${NC}"
 echo
 
+# Step 0: Enable MFA Token Caching (reduces authentication prompts)
+echo -e "${BLUE}=== STEP 0: Enabling MFA Token Caching ===${NC}"
+echo "This step will enable MFA token caching to reduce authentication prompts during deployment."
+execute_sql_file "setup_mfa_caching.sql" "MFA Token Caching Setup"
+
 # Step 1: Create Python UDFs
 echo -e "${BLUE}=== STEP 1: Creating Python UDFs ===${NC}"
 execute_sql_file "python_udfs/rdf_parser_udf.sql" "RDF Parser UDF"
@@ -109,6 +114,7 @@ echo -e "${BLUE}What's been created in your account:${NC}"
 echo "  • Database: $SNOWFLAKE_DATABASE"
 echo "  • Schema: $SNOWFLAKE_SCHEMA"
 echo "  • Warehouse: $SNOWFLAKE_WAREHOUSE"
+echo "  • MFA token caching enabled (reduced authentication prompts)"
 echo "  • Python UDFs for RDF processing"
 echo "  • Semantic views (SV_*)"
 echo "  • Sample data and relationships"
