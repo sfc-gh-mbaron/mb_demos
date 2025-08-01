@@ -7,7 +7,7 @@ USE SCHEMA SEMANTIC_VIEWS;
 -- Step 1: Load sample RDF schema
 -- In a real scenario, you would load this from a file or external source
 INSERT INTO RDF_SCHEMAS (SCHEMA_ID, SCHEMA_NAME, RDF_FORMAT, RDF_CONTENT, DESCRIPTION)
-VALUES (
+SELECT 
     GENERATE_ID('SCHEMA'),
     'E-commerce Domain Model',
     'turtle',
@@ -65,8 +65,7 @@ ex:placedBy rdf:type rdf:Property ;
     rdfs:label "placed by" ;
     rdfs:domain ex:Order ;
     rdfs:range ex:Customer .',
-    'Sample e-commerce RDF schema for demonstration'
-);
+    'Sample e-commerce RDF schema for demonstration';
 
 -- Step 2: Parse the RDF schema
 SET schema_id = (SELECT SCHEMA_ID FROM RDF_SCHEMAS WHERE SCHEMA_NAME = 'E-commerce Domain Model' LIMIT 1);
@@ -166,7 +165,9 @@ CREATE OR REPLACE TABLE RELATIONSHIPS (
 );
 
 -- Step 6: Create semantic views
-CREATE OR REPLACE VIEW SV_PRODUCT AS
+CREATE OR REPLACE VIEW SV_PRODUCT 
+COMMENT = 'Semantic view for RDF class: http://example.com/ecommerce#Product'
+AS
 SELECT 
     ID,
     URI,
@@ -175,10 +176,11 @@ SELECT
     PRICE, -- Price
     CREATED_AT,
     UPDATED_AT
-FROM PRODUCT
-COMMENT = 'Semantic view for RDF class: http://example.com/ecommerce#Product';
+FROM PRODUCT;
 
-CREATE OR REPLACE VIEW SV_CUSTOMER AS
+CREATE OR REPLACE VIEW SV_CUSTOMER 
+COMMENT = 'Semantic view for RDF class: http://example.com/ecommerce#Customer'
+AS
 SELECT 
     ID,
     URI,
@@ -186,10 +188,11 @@ SELECT
     CUSTOMERNAME, -- Customer Name
     CREATED_AT,
     UPDATED_AT
-FROM CUSTOMER
-COMMENT = 'Semantic view for RDF class: http://example.com/ecommerce#Customer';
+FROM CUSTOMER;
 
-CREATE OR REPLACE VIEW SV_ORDER AS
+CREATE OR REPLACE VIEW SV_ORDER 
+COMMENT = 'Semantic view for RDF class: http://example.com/ecommerce#Order'
+AS
 SELECT 
     ID,
     URI,
@@ -197,10 +200,11 @@ SELECT
     ORDERDATE, -- Order Date
     CREATED_AT,
     UPDATED_AT
-FROM ORDER_
-COMMENT = 'Semantic view for RDF class: http://example.com/ecommerce#Order';
+FROM ORDER_;
 
-CREATE OR REPLACE VIEW SV_RELATIONSHIPS AS
+CREATE OR REPLACE VIEW SV_RELATIONSHIPS 
+COMMENT = 'Semantic view for RDF object properties and relationships'
+AS
 SELECT 
     ID,
     SUBJECT_URI,
@@ -208,12 +212,11 @@ SELECT
     OBJECT_URI,
     RELATIONSHIP_TYPE,
     CREATED_AT
-FROM RELATIONSHIPS
-COMMENT = 'Semantic view for RDF object properties and relationships';
+FROM RELATIONSHIPS;
 
 -- Step 7: Load sample instance data
 INSERT INTO RDF_SCHEMAS (SCHEMA_ID, SCHEMA_NAME, RDF_FORMAT, RDF_CONTENT, DESCRIPTION)
-VALUES (
+SELECT 
     GENERATE_ID('DATA'),
     'E-commerce Sample Data',
     'turtle',
@@ -247,8 +250,7 @@ inst:order1 a ex:Order ;
 # Relationships
 inst:product1 ex:belongsToCategory inst:computers .
 inst:product2 ex:belongsToCategory inst:electronics .',
-    'Sample e-commerce instance data for demonstration'
-);
+    'Sample e-commerce instance data for demonstration';
 
 -- Step 8: Demonstrate conversion summary
 SELECT 

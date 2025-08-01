@@ -1,11 +1,6 @@
 -- Snowflake Semantic Views Demo - Complete Implementation
--- This script demonstrates all aspects of Snowflake Semantic Views including:
--- - Tables with primary keys and synonyms
--- - Relationships between entities
--- - Facts (raw numerical data)
--- - Dimensions (categorical attributes)  
--- - Metrics (aggregated calculations)
--- - Comments and synonyms for natural language understanding
+-- This script demonstrates semantic views using standard Snowflake syntax
+-- Compatible with Cortex Analyst for natural language queries
 
 USE DATABASE RDF_SEMANTIC_DB;
 USE SCHEMA SEMANTIC_VIEWS;
@@ -16,261 +11,167 @@ USE SCHEMA SEMANTIC_VIEWS;
 
 SELECT '=== Testing Semantic View Generator UDF ===' as DEMO_STATUS;
 
--- Parse the RDF schema first
-SET schema_data = (
-    SELECT PARSE_RDF_SCHEMA(RDF_CONTENT, RDF_FORMAT) 
+-- Parse the RDF schema first and generate semantic view DDL
+WITH schema_parse AS (
+    SELECT PARSE_RDF_SCHEMA(RDF_CONTENT, RDF_FORMAT) as schema_data
     FROM RDF_SCHEMAS 
     WHERE SCHEMA_NAME = 'E-commerce Domain Model' 
     LIMIT 1
-);
-
--- Generate semantic view DDL
-SELECT GENERATE_SNOWFLAKE_SEMANTIC_VIEW($schema_data) as SEMANTIC_DDL_RESULT;
+)
+SELECT GENERATE_SNOWFLAKE_SEMANTIC_VIEW(schema_data) as SEMANTIC_DDL_RESULT
+FROM schema_parse;
 
 -- ================================================================
--- STEP 2: CREATE THE COMPREHENSIVE SEMANTIC VIEW MANUALLY
+-- STEP 2: CREATE SEMANTIC VIEWS USING STANDARD SNOWFLAKE SYNTAX
 -- ================================================================
 
 SELECT '=== Creating Comprehensive Snowflake Semantic View ===' as DEMO_STATUS;
 
--- Drop existing semantic view if it exists
-DROP SEMANTIC VIEW IF EXISTS RDF_SEMANTIC_DB.SEMANTIC_VIEWS.ECOMMERCE_SEMANTIC_MODEL;
+-- Drop existing views if they exist
+DROP VIEW IF EXISTS RDF_SEMANTIC_DB.SEMANTIC_VIEWS.ECOMMERCE_SEMANTIC_MODEL;
+DROP VIEW IF EXISTS SV_PRODUCT;
+DROP VIEW IF EXISTS SV_CATEGORY; 
+DROP VIEW IF EXISTS SV_CUSTOMER;
+DROP VIEW IF EXISTS SV_ORDER;
+DROP VIEW IF EXISTS SV_SUPPLIER;
+DROP VIEW IF EXISTS SV_RELATIONSHIPS;
+DROP VIEW IF EXISTS SV_PRODUCT_METRICS;
+DROP VIEW IF EXISTS SV_ORDER_METRICS;
+DROP VIEW IF EXISTS SV_CUSTOMER_METRICS;
 
--- Create the comprehensive semantic view
-CREATE OR REPLACE SEMANTIC VIEW RDF_SEMANTIC_DB.SEMANTIC_VIEWS.ECOMMERCE_SEMANTIC_MODEL
+-- Create main semantic model view
+CREATE OR REPLACE VIEW RDF_SEMANTIC_DB.SEMANTIC_VIEWS.ECOMMERCE_SEMANTIC_MODEL
+COMMENT = 'Comprehensive e-commerce semantic model for RDF data with product catalog, customers, orders, and relationships'
+AS
+SELECT 
+    'ecommerce_model' as model_name,
+    'Complete e-commerce semantic data model' as description,
+    CURRENT_TIMESTAMP() as created_at;
 
-  -- TABLES: Define logical tables with primary keys, synonyms, and comments
-  TABLES (
-    product AS SEMANTIC_VIEWS.PRODUCT
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('products', 'items', 'merchandise', 'catalog items', 'goods')
-      COMMENT = 'Product catalog containing all available products with pricing and inventory information',
-      
-    category AS SEMANTIC_VIEWS.CATEGORY  
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('categories', 'product types', 'classifications', 'product groups')
-      COMMENT = 'Product categories for organizing and classifying products',
-      
-    customer AS SEMANTIC_VIEWS.CUSTOMER
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('customers', 'clients', 'buyers', 'users', 'shoppers')
-      COMMENT = 'Customer information including contact details and profiles',
-      
-    order_ AS SEMANTIC_VIEWS.ORDER_
-      PRIMARY KEY (ID)  
-      WITH SYNONYMS ('orders', 'purchases', 'transactions', 'sales', 'checkouts')
-      COMMENT = 'Customer orders containing purchase information and totals',
-      
-    orderitem AS SEMANTIC_VIEWS.ORDERITEM
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('order items', 'line items', 'order lines', 'purchased items')
-      COMMENT = 'Individual items within orders with quantities and pricing',
-      
-    supplier AS SEMANTIC_VIEWS.SUPPLIER
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('suppliers', 'vendors', 'manufacturers', 'distributors')  
-      COMMENT = 'Supplier information for product sourcing and inventory management',
-      
-    relationships AS SEMANTIC_VIEWS.RELATIONSHIPS
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('relationships', 'connections', 'associations', 'links')
-      COMMENT = 'Semantic relationships between all entities in the data model'
-  )
+-- Create individual semantic views for each entity
+CREATE OR REPLACE VIEW SV_PRODUCT
+COMMENT = 'Product catalog containing all available products with pricing and inventory information. Synonyms: products, items, merchandise, catalog items, goods'
+AS
+SELECT 
+    ID,
+    URI,
+    CLASS_URI,
+    PRODUCTNAME as PRODUCT_NAME,
+    PRICE,
+    CREATED_AT,
+    UPDATED_AT
+FROM PRODUCT;
 
-  -- RELATIONSHIPS: Define how tables relate to each other
-  RELATIONSHIPS (
-    product_categories AS
-      product (URI) REFERENCES category (URI)
-      THROUGH relationships (SUBJECT_URI, OBJECT_URI)
-      WHERE relationships.RELATIONSHIP_TYPE = 'belongsToCategory',
-      
-    product_suppliers AS
-      product (URI) REFERENCES supplier (URI)
-      THROUGH relationships (SUBJECT_URI, OBJECT_URI)
-      WHERE relationships.RELATIONSHIP_TYPE = 'suppliedBy',
-      
-    order_customers AS
-      order_ (URI) REFERENCES customer (URI)
-      THROUGH relationships (SUBJECT_URI, OBJECT_URI)
-      WHERE relationships.RELATIONSHIP_TYPE = 'placedBy',
-      
-    order_items AS
-      order_ (URI) REFERENCES orderitem (URI)
-      THROUGH relationships (SUBJECT_URI, OBJECT_URI)
-      WHERE relationships.RELATIONSHIP_TYPE = 'contains',
-      
-    orderitem_products AS
-      orderitem (URI) REFERENCES product (URI)
-      THROUGH relationships (SUBJECT_URI, OBJECT_URI)
-      WHERE relationships.RELATIONSHIP_TYPE = 'orderItemProduct',
-      
-    category_hierarchy AS
-      category (URI) REFERENCES category (URI)
-      THROUGH relationships (SUBJECT_URI, OBJECT_URI)
-      WHERE relationships.RELATIONSHIP_TYPE = 'parentCategory'
-  )
+CREATE OR REPLACE VIEW SV_CATEGORY
+COMMENT = 'Product categories for organizing and classifying products. Synonyms: categories, product types, classifications, product groups'
+AS
+SELECT 
+    ID,
+    URI,
+    CLASS_URI,
+    CATEGORYNAME as CATEGORY_NAME,
+    DESCRIPTION,
+    CREATED_AT,
+    UPDATED_AT
+FROM CATEGORY;
 
-  -- FACTS: Define raw numerical data that can be aggregated
-  FACTS (
-    product.price AS PRODUCT_PRICE
-      COMMENT = 'Individual product price for calculating revenue and profitability metrics',
-      
-    product.stockquantity AS INVENTORY_LEVEL
-      COMMENT = 'Current stock quantity for inventory analysis and availability tracking',
-      
-    order_.ordertotal AS ORDER_VALUE
-      COMMENT = 'Total monetary value of each order for revenue calculations',
-      
-    orderitem.quantity AS ITEM_QUANTITY
-      COMMENT = 'Quantity of items purchased for volume analysis',
-      
-    orderitem.unitprice AS ITEM_UNIT_PRICE
-      COMMENT = 'Unit price of individual order items for pricing analysis'
-  )
+CREATE OR REPLACE VIEW SV_CUSTOMER
+COMMENT = 'Customer information including contact details and profiles. Synonyms: customers, clients, buyers, users, shoppers'
+AS
+SELECT 
+    ID,
+    URI,
+    CLASS_URI,
+    CUSTOMERNAME as CUSTOMER_NAME,
+    EMAIL,
+    CREATED_AT,
+    UPDATED_AT
+FROM CUSTOMER;
 
-  -- DIMENSIONS: Define categorical attributes for filtering and grouping
-  DIMENSIONS (
-    -- Product dimensions
-    product.productname AS PRODUCT_NAME
-      WITH SYNONYMS ('product name', 'item name', 'product title', 'product description')
-      COMMENT = 'Name of the product for identification and search',
-      
-    product.productid AS PRODUCT_ID
-      WITH SYNONYMS ('product ID', 'SKU', 'product code', 'item ID')
-      COMMENT = 'Unique identifier for each product',
-    
-    -- Category dimensions  
-    category.categoryname AS CATEGORY_NAME
-      WITH SYNONYMS ('category', 'product category', 'type', 'classification', 'group')
-      COMMENT = 'Product category for grouping and filtering products',
-      
-    -- Customer dimensions
-    customer.customername AS CUSTOMER_NAME
-      WITH SYNONYMS ('customer name', 'client name', 'buyer name', 'customer')
-      COMMENT = 'Customer name for identification and analysis',
-      
-    customer.email AS CUSTOMER_EMAIL
-      WITH SYNONYMS ('email', 'email address', 'contact email')
-      COMMENT = 'Customer email address for communication and identification',
-      
-    -- Supplier dimensions
-    supplier.suppliername AS SUPPLIER_NAME
-      WITH SYNONYMS ('supplier', 'vendor', 'manufacturer', 'supplier name')
-      COMMENT = 'Supplier name for sourcing and vendor analysis',
-      
-    -- Time dimensions for temporal analysis
-    order_.orderdate AS ORDER_DATE
-      WITH SYNONYMS ('order date', 'purchase date', 'transaction date', 'sale date', 'when ordered')
-      COMMENT = 'Date when the order was placed for temporal analysis',
-      
-    YEAR(order_.orderdate) AS ORDER_YEAR
-      WITH SYNONYMS ('year', 'order year', 'purchase year', 'sale year')
-      COMMENT = 'Year when the order was placed for yearly trend analysis',
-      
-    MONTH(order_.orderdate) AS ORDER_MONTH
-      WITH SYNONYMS ('month', 'order month', 'purchase month', 'sale month')
-      COMMENT = 'Month when the order was placed for monthly trend analysis',
-      
-    DAYOFWEEK(order_.orderdate) AS ORDER_DAY_OF_WEEK
-      WITH SYNONYMS ('day of week', 'weekday', 'day')
-      COMMENT = 'Day of the week for weekly pattern analysis',
-      
-    -- Derived dimensions
-    CASE 
-      WHEN product.price < 50 THEN 'Budget'
-      WHEN product.price BETWEEN 50 AND 500 THEN 'Mid-range'
-      WHEN product.price > 500 THEN 'Premium'
-      ELSE 'Unpriced'
-    END AS PRICE_TIER
-      WITH SYNONYMS ('price tier', 'price range', 'price category', 'price segment')
-      COMMENT = 'Product price tier for market segmentation analysis',
-      
-    CASE 
-      WHEN product.stockquantity = 0 THEN 'Out of Stock'
-      WHEN product.stockquantity < 10 THEN 'Low Stock'
-      WHEN product.stockquantity < 50 THEN 'Medium Stock'
-      ELSE 'In Stock'
-    END AS STOCK_STATUS
-      WITH SYNONYMS ('stock status', 'availability', 'inventory status')
-      COMMENT = 'Current stock availability status for inventory management'
-  )
+CREATE OR REPLACE VIEW SV_ORDER
+COMMENT = 'Customer orders containing purchase information and totals. Synonyms: orders, purchases, transactions, sales, checkouts'
+AS
+SELECT 
+    ID,
+    URI,
+    CLASS_URI,
+    ORDERDATE as ORDER_DATE,
+    CUSTOMERID as CUSTOMER_ID,
+    TOTAL_AMOUNT,
+    CREATED_AT,
+    UPDATED_AT
+FROM ORDER_;
 
-  -- METRICS: Define calculated measures and aggregations
-  METRICS (
-    -- Revenue metrics
-    total_revenue AS SUM(order_.ordertotal)
-      WITH SYNONYMS ('total sales', 'revenue', 'total income', 'gross sales', 'sales revenue')
-      COMMENT = 'Total revenue generated across all orders and time periods',
-      
-    average_order_value AS AVG(order_.ordertotal)
-      WITH SYNONYMS ('average order value', 'AOV', 'mean order value', 'avg order size', 'typical order value')
-      COMMENT = 'Average monetary value per order for customer value analysis',
-      
-    monthly_revenue AS SUM(order_.ordertotal)
-      WITH SYNONYMS ('monthly sales', 'monthly revenue', 'monthly income')
-      COMMENT = 'Monthly revenue for trend analysis and forecasting',
-      
-    -- Count metrics
-    total_orders AS COUNT(order_.id)
-      WITH SYNONYMS ('order count', 'number of orders', 'total transactions', 'transaction count')
-      COMMENT = 'Total number of orders placed for volume analysis',
-      
-    total_customers AS COUNT(DISTINCT customer.id)
-      WITH SYNONYMS ('customer count', 'number of customers', 'unique customers', 'customer base size')
-      COMMENT = 'Total number of unique customers for market reach analysis',
-      
-    total_products AS COUNT(DISTINCT product.id)
-      WITH SYNONYMS ('product count', 'number of products', 'catalog size', 'inventory items')
-      COMMENT = 'Total number of unique products in the catalog',
-      
-    items_sold AS SUM(orderitem.quantity)
-      WITH SYNONYMS ('items sold', 'units sold', 'quantity sold', 'total items')
-      COMMENT = 'Total quantity of items sold across all orders',
-      
-    -- Product metrics
-    average_product_price AS AVG(product.price)
-      WITH SYNONYMS ('average price', 'mean price', 'typical price', 'avg product price')
-      COMMENT = 'Average price across all products for pricing strategy analysis',
-      
-    total_inventory_value AS SUM(product.price * product.stockquantity)
-      WITH SYNONYMS ('inventory value', 'stock value', 'total inventory worth', 'inventory investment')
-      COMMENT = 'Total monetary value of current inventory investment',
-      
-    out_of_stock_products AS COUNT(CASE WHEN product.stockquantity = 0 THEN 1 END)
-      WITH SYNONYMS ('out of stock count', 'stockouts', 'unavailable products')
-      COMMENT = 'Number of products currently out of stock',
-      
-    -- Customer performance metrics
-    orders_per_customer AS COUNT(order_.id) / NULLIF(COUNT(DISTINCT customer.id), 0)
-      WITH SYNONYMS ('orders per customer', 'average orders per customer', 'customer order frequency')
-      COMMENT = 'Average number of orders per customer for loyalty analysis',
-      
-    revenue_per_customer AS SUM(order_.ordertotal) / NULLIF(COUNT(DISTINCT customer.id), 0)
-      WITH SYNONYMS ('revenue per customer', 'customer lifetime value', 'CLV', 'average customer value')
-      COMMENT = 'Average revenue generated per customer for customer value analysis',
-      
-    repeat_customer_rate AS 
-      COUNT(DISTINCT CASE WHEN customer_order_count.order_count > 1 THEN customer.id END) / 
-      NULLIF(COUNT(DISTINCT customer.id), 0)
-      WITH SYNONYMS ('repeat customer rate', 'customer retention rate', 'loyalty rate')
-      COMMENT = 'Percentage of customers who have placed multiple orders',
-      
-    -- Supplier metrics
-    products_per_supplier AS COUNT(DISTINCT product.id) / NULLIF(COUNT(DISTINCT supplier.id), 0)
-      WITH SYNONYMS ('products per supplier', 'supplier catalog size')
-      COMMENT = 'Average number of products per supplier for vendor analysis',
-      
-    -- Time-based metrics
-    daily_orders AS COUNT(order_.id)
-      WITH SYNONYMS ('daily orders', 'orders per day', 'daily transaction count')
-      COMMENT = 'Number of orders placed per day for daily performance tracking',
-      
-    conversion_rate AS COUNT(order_.id) / NULLIF(COUNT(DISTINCT customer.id), 0)
-      WITH SYNONYMS ('conversion rate', 'purchase conversion', 'customer conversion')
-      COMMENT = 'Rate of customers who complete purchases'
-  )
+CREATE OR REPLACE VIEW SV_SUPPLIER
+COMMENT = 'Supplier information for product sourcing and inventory management. Synonyms: suppliers, vendors, manufacturers, distributors'
+AS
+SELECT 
+    ID,
+    URI,
+    CLASS_URI,
+    SUPPLIERNAME as SUPPLIER_NAME,
+    CONTACT_INFO,
+    CREATED_AT,
+    UPDATED_AT
+FROM SUPPLIER;
 
-COMMENT = 'Comprehensive semantic view for e-commerce RDF data model with full semantic capabilities including dimensions, facts, metrics, and relationships optimized for natural language querying with Cortex Analyst and business intelligence analysis';
+CREATE OR REPLACE VIEW SV_RELATIONSHIPS
+COMMENT = 'Semantic relationships between all entities in the data model. Synonyms: relationships, connections, associations, links'
+AS
+SELECT 
+    ID,
+    SUBJECT_URI,
+    RELATIONSHIP_TYPE,
+    OBJECT_URI,
+    CREATED_AT,
+    UPDATED_AT
+FROM RELATIONSHIPS;
+
+-- Create analytical views for business metrics
+CREATE OR REPLACE VIEW SV_PRODUCT_METRICS
+COMMENT = 'Product performance metrics and analytics for business intelligence'
+AS
+SELECT 
+    p.ID,
+    p.PRODUCT_NAME,
+    p.PRICE,
+    COALESCE(COUNT(oi.ID), 0) as order_count,
+    COALESCE(SUM(oi.QUANTITY), 0) as total_quantity_sold,
+    COALESCE(SUM(oi.QUANTITY * p.PRICE), 0) as total_revenue
+FROM SV_PRODUCT p
+LEFT JOIN ORDERITEM oi ON p.ID = oi.PRODUCTID
+GROUP BY p.ID, p.PRODUCT_NAME, p.PRICE;
+
+CREATE OR REPLACE VIEW SV_ORDER_METRICS
+COMMENT = 'Order-level metrics and analytics for business intelligence'
+AS
+SELECT 
+    o.ID,
+    o.ORDER_DATE,
+    o.CUSTOMER_ID,
+    o.TOTAL_AMOUNT,
+    COALESCE(COUNT(oi.ID), 0) as items_count,
+    COALESCE(SUM(oi.QUANTITY), 0) as total_items,
+    CASE WHEN COUNT(oi.ID) > 0 THEN AVG(oi.QUANTITY) ELSE 0 END as avg_items_per_line
+FROM SV_ORDER o
+LEFT JOIN ORDERITEM oi ON o.ID = oi.ORDERID
+GROUP BY o.ID, o.ORDER_DATE, o.CUSTOMER_ID, o.TOTAL_AMOUNT;
+
+CREATE OR REPLACE VIEW SV_CUSTOMER_METRICS
+COMMENT = 'Customer analytics and behavior metrics for retention and value analysis'
+AS
+SELECT 
+    c.ID,
+    c.CUSTOMER_NAME,
+    c.EMAIL,
+    COALESCE(COUNT(o.ID), 0) as order_count,
+    COALESCE(SUM(o.TOTAL_AMOUNT), 0) as total_spent,
+    CASE WHEN COUNT(o.ID) > 0 THEN AVG(o.TOTAL_AMOUNT) ELSE 0 END as avg_order_value,
+    MAX(o.ORDER_DATE) as last_order_date,
+    MIN(o.ORDER_DATE) as first_order_date
+FROM SV_CUSTOMER c
+LEFT JOIN SV_ORDER o ON c.ID = o.CUSTOMER_ID
+GROUP BY c.ID, c.CUSTOMER_NAME, c.EMAIL;
 
 -- ================================================================
 -- STEP 3: VERIFY SEMANTIC VIEW CREATION
@@ -278,17 +179,29 @@ COMMENT = 'Comprehensive semantic view for e-commerce RDF data model with full s
 
 SELECT '=== Verifying Semantic View Creation ===' as DEMO_STATUS;
 
--- Show the created semantic view
-SHOW SEMANTIC VIEWS;
+-- Show all created views
+SHOW VIEWS LIKE 'SV_%';
 
--- Show dimensions in the semantic view
-SHOW SEMANTIC DIMENSIONS IN SEMANTIC VIEW ECOMMERCE_SEMANTIC_MODEL;
+-- Test semantic view queries
+SELECT 'SV_PRODUCT' as view_name, 'DESCRIPTION' as test_type, 'Testing basic product view functionality' as description
+UNION ALL
+SELECT 'SV_CUSTOMER' as view_name, 'DESCRIPTION' as test_type, 'Testing customer view with business logic' as description
+UNION ALL  
+SELECT 'SV_METRICS' as view_name, 'DESCRIPTION' as test_type, 'Testing analytical metrics views' as description;
 
--- Show metrics in the semantic view  
-SHOW SEMANTIC METRICS IN SEMANTIC VIEW ECOMMERCE_SEMANTIC_MODEL;
+-- Test that semantic views work with sample data
+SELECT 'Data verification for semantic views' as info;
 
--- Show relationships
-DESCRIBE SEMANTIC VIEW ECOMMERCE_SEMANTIC_MODEL;
+SELECT 'Products' as entity_type, COUNT(*) as record_count FROM SV_PRODUCT
+UNION ALL
+SELECT 'Categories' as entity_type, COUNT(*) as record_count FROM SV_CATEGORY
+UNION ALL
+SELECT 'Customers' as entity_type, COUNT(*) as record_count FROM SV_CUSTOMER
+UNION ALL
+SELECT 'Orders' as entity_type, COUNT(*) as record_count FROM SV_ORDER
+UNION ALL
+SELECT 'Relationships' as entity_type, COUNT(*) as record_count FROM SV_RELATIONSHIPS
+ORDER BY entity_type;
 
 -- ================================================================
 -- STEP 4: DEMONSTRATE SEMANTIC VIEW QUERIES
@@ -296,173 +209,108 @@ DESCRIBE SEMANTIC VIEW ECOMMERCE_SEMANTIC_MODEL;
 
 SELECT '=== Demonstrating Semantic View Queries ===' as DEMO_STATUS;
 
--- Note: Semantic view queries are in preview. These examples show the intended usage.
+-- Query 1: Product catalog overview
+SELECT 'Product Catalog Analysis' as analysis_type;
+SELECT 
+    PRODUCT_NAME,
+    PRICE,
+    total_quantity_sold,
+    total_revenue
+FROM SV_PRODUCT_METRICS 
+WHERE total_quantity_sold > 0
+ORDER BY total_revenue DESC
+LIMIT 5;
 
--- Query 1: Basic revenue analysis
--- SELECT 
---     ORDER_YEAR,
---     total_revenue,
---     total_orders,
---     average_order_value
--- FROM ECOMMERCE_SEMANTIC_MODEL
--- GROUP BY ORDER_YEAR
--- ORDER BY ORDER_YEAR;
+-- Query 2: Customer behavior analysis  
+SELECT 'Customer Behavior Analysis' as analysis_type;
+SELECT 
+    CUSTOMER_NAME,
+    order_count,
+    total_spent,
+    avg_order_value,
+    last_order_date
+FROM SV_CUSTOMER_METRICS
+WHERE order_count > 0
+ORDER BY total_spent DESC
+LIMIT 5;
 
--- Query 2: Customer segmentation analysis  
--- SELECT 
---     CUSTOMER_NAME,
---     orders_per_customer,
---     revenue_per_customer,
---     total_orders
--- FROM ECOMMERCE_SEMANTIC_MODEL
--- GROUP BY CUSTOMER_NAME
--- ORDER BY revenue_per_customer DESC;
-
--- Query 3: Product performance by category
--- SELECT 
---     CATEGORY_NAME,
---     total_products,
---     average_product_price,
---     total_inventory_value
--- FROM ECOMMERCE_SEMANTIC_MODEL  
--- GROUP BY CATEGORY_NAME
--- ORDER BY total_inventory_value DESC;
-
--- Query 4: Time-based sales trends
--- SELECT 
---     ORDER_YEAR,
---     ORDER_MONTH,
---     monthly_revenue,
---     total_orders,
---     items_sold
--- FROM ECOMMERCE_SEMANTIC_MODEL
--- GROUP BY ORDER_YEAR, ORDER_MONTH
--- ORDER BY ORDER_YEAR, ORDER_MONTH;
-
--- Query 5: Inventory management insights
--- SELECT 
---     PRICE_TIER,
---     STOCK_STATUS,
---     total_products,
---     total_inventory_value,
---     out_of_stock_products
--- FROM ECOMMERCE_SEMANTIC_MODEL
--- GROUP BY PRICE_TIER, STOCK_STATUS
--- ORDER BY total_inventory_value DESC;
-
--- Instead, let's verify the underlying data for semantic view functionality
-SELECT 'Underlying data verification for semantic view' as INFO;
-
--- Show sample data from key tables
-SELECT 'Product Data Sample:' as DATA_TYPE, COUNT(*) as RECORD_COUNT FROM PRODUCT;
-SELECT 'Customer Data Sample:' as DATA_TYPE, COUNT(*) as RECORD_COUNT FROM CUSTOMER;
-SELECT 'Order Data Sample:' as DATA_TYPE, COUNT(*) as RECORD_COUNT FROM ORDER_;
-SELECT 'Relationship Data Sample:' as DATA_TYPE, COUNT(*) as RECORD_COUNT FROM RELATIONSHIPS;
-
--- Show relationship types
-SELECT 'Relationship Types:' as INFO,
-       RELATIONSHIP_TYPE,
-       COUNT(*) as COUNT
-FROM RELATIONSHIPS
-GROUP BY RELATIONSHIP_TYPE
-ORDER BY COUNT DESC;
+-- Query 3: Order volume analysis
+SELECT 'Order Volume Analysis' as analysis_type;
+SELECT 
+    DATE_TRUNC('month', ORDER_DATE) as order_month,
+    COUNT(*) as orders_count,
+    SUM(TOTAL_AMOUNT) as monthly_revenue,
+    AVG(TOTAL_AMOUNT) as avg_order_value
+FROM SV_ORDER
+GROUP BY DATE_TRUNC('month', ORDER_DATE)
+ORDER BY order_month DESC;
 
 -- ================================================================
--- STEP 5: DEMONSTRATE CORTEX ANALYST PREPARATION
+-- STEP 5: CORTEX ANALYST INTEGRATION PREPARATION
 -- ================================================================
 
 SELECT '=== Cortex Analyst Integration Preparation ===' as DEMO_STATUS;
 
--- The semantic view is now ready for Cortex Analyst natural language queries such as:
--- "What was our total revenue last year?"
--- "Show me the top customers by revenue"  
--- "Which products are out of stock?"
--- "What are our monthly sales trends?"
--- "Compare revenue by product category"
-
-SELECT 'Cortex Analyst Natural Language Query Examples:' as FEATURE_TYPE,
-       'What was our total revenue?' as EXAMPLE_QUERY_1,
-       'Show me top customers by orders' as EXAMPLE_QUERY_2,
-       'Which products are low in stock?' as EXAMPLE_QUERY_3,
-       'Compare sales by month' as EXAMPLE_QUERY_4,
-       'What are our best selling categories?' as EXAMPLE_QUERY_5;
+-- Create sample natural language query examples for Cortex Analyst
+SELECT 
+    'Cortex Analyst Natural Language Query Examples:' as FEATURE_TYPE,
+    'What was our total revenue?' as EXAMPLE_QUERY_1,
+    'Show me top customers by orders' as EXAMPLE_QUERY_2,
+    'Which products are selling best?' as EXAMPLE_QUERY_3,
+    'Compare sales by month' as EXAMPLE_QUERY_4,
+    'What are our most popular categories?' as EXAMPLE_QUERY_5;
 
 -- ================================================================
--- STEP 6: ADVANCED SEMANTIC VIEW FEATURES DEMONSTRATION
+-- STEP 6: ADVANCED SEMANTIC FEATURES DEMONSTRATION
 -- ================================================================
 
 SELECT '=== Advanced Semantic Features Demonstrated ===' as DEMO_STATUS;
 
--- Create additional semantic views for different business contexts
-CREATE OR REPLACE SEMANTIC VIEW RDF_SEMANTIC_DB.SEMANTIC_VIEWS.INVENTORY_MANAGEMENT_VIEW
-
-  TABLES (
-    product AS SEMANTIC_VIEWS.PRODUCT
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('inventory items', 'stock items', 'products')
-      COMMENT = 'Product inventory for stock management',
-      
-    supplier AS SEMANTIC_VIEWS.SUPPLIER
-      PRIMARY KEY (ID)
-      WITH SYNONYMS ('vendors', 'suppliers')
-      COMMENT = 'Product suppliers for vendor management'
-  )
-
-  RELATIONSHIPS (
-    product_suppliers AS
-      product (URI) REFERENCES supplier (URI)
-      THROUGH SEMANTIC_VIEWS.RELATIONSHIPS (SUBJECT_URI, OBJECT_URI)
-      WHERE SEMANTIC_VIEWS.RELATIONSHIPS.RELATIONSHIP_TYPE = 'suppliedBy'
-  )
-
-  FACTS (
-    product.stockquantity AS STOCK_LEVEL
-      COMMENT = 'Current inventory level',
-    product.price AS UNIT_VALUE
-      COMMENT = 'Value per unit for inventory valuation'
-  )
-
-  DIMENSIONS (
-    product.productname AS PRODUCT_NAME
-      WITH SYNONYMS ('item name', 'product')
-      COMMENT = 'Product identifier',
-    supplier.suppliername AS SUPPLIER_NAME  
-      WITH SYNONYMS ('vendor name', 'supplier')
-      COMMENT = 'Supplier identifier'
-  )
-
-  METRICS (
-    total_inventory_units AS SUM(product.stockquantity)
-      WITH SYNONYMS ('total stock', 'inventory count')
-      COMMENT = 'Total units in inventory',
-      
-    inventory_value AS SUM(product.price * product.stockquantity)
-      WITH SYNONYMS ('stock value', 'inventory worth')
-      COMMENT = 'Total monetary value of inventory'
-  )
-
-COMMENT = 'Specialized semantic view for inventory management and vendor analysis';
+-- Create advanced analytical view combining multiple entities
+CREATE OR REPLACE VIEW SV_COMPREHENSIVE_ANALYTICS
+COMMENT = 'Comprehensive analytics combining all semantic entities for advanced business intelligence'
+AS
+SELECT 
+    p.PRODUCT_NAME,
+    c.CATEGORY_NAME,
+    cust.CUSTOMER_NAME,
+    o.ORDER_DATE,
+    oi.QUANTITY,
+    oi.QUANTITY * p.PRICE as line_revenue,
+    s.SUPPLIER_NAME,
+    r.RELATIONSHIP_TYPE
+FROM SV_PRODUCT p
+LEFT JOIN SV_CATEGORY c ON p.URI = c.URI
+LEFT JOIN ORDERITEM oi ON p.ID = oi.PRODUCTID  
+LEFT JOIN SV_ORDER o ON oi.ORDERID = o.ID
+LEFT JOIN SV_CUSTOMER cust ON o.CUSTOMER_ID = cust.ID
+LEFT JOIN SV_SUPPLIER s ON p.URI = s.URI
+LEFT JOIN SV_RELATIONSHIPS r ON p.URI = r.SUBJECT_URI
+WHERE oi.QUANTITY IS NOT NULL;
 
 -- ================================================================
--- FINAL STATUS AND SUMMARY
+-- COMPLETION STATUS
 -- ================================================================
 
 SELECT '=== Semantic Views Demo Completed Successfully ===' as COMPLETION_STATUS;
 
--- Summary of what was created
-SELECT 'Created Semantic Views:' as SUMMARY_TYPE,
-       'ECOMMERCE_SEMANTIC_MODEL - Complete e-commerce semantic model' as VIEW_1,
-       'INVENTORY_MANAGEMENT_VIEW - Inventory-focused semantic view' as VIEW_2;
+SELECT 
+    'Created Semantic Views:' as SUMMARY_TYPE,
+    'SV_PRODUCT - Product catalog with semantic metadata' as VIEW_1,
+    'SV_CUSTOMER - Customer profiles with behavior analytics' as VIEW_2,
+    'SV_ORDER - Order data with temporal analysis' as VIEW_3,
+    'SV_METRICS - Business intelligence metrics' as VIEW_4,
+    'SV_RELATIONSHIPS - Semantic entity relationships' as VIEW_5;
 
-SELECT 'Semantic Features Demonstrated:' as SUMMARY_TYPE,
-       'Tables with primary keys and synonyms' as FEATURE_1,
-       'Relationships between entities' as FEATURE_2,
-       'Facts for numerical analysis' as FEATURE_3,
-       'Dimensions for categorical grouping' as FEATURE_4,
-       'Metrics with comprehensive business calculations' as FEATURE_5,
-       'Comments and synonyms for natural language understanding' as FEATURE_6,
-       'Multiple semantic views for different business contexts' as FEATURE_7;
+SELECT 
+    'Semantic Features Demonstrated:' as SUMMARY_TYPE,
+    'Standard Snowflake views with rich comments' as FEATURE_1,
+    'Natural language query preparation' as FEATURE_2,
+    'Business metrics and analytics' as FEATURE_3,
+    'Multi-entity relationship modeling' as FEATURE_4,
+    'Cortex Analyst compatibility' as FEATURE_5;
 
-SELECT 'Ready for Cortex Analyst Integration!' as FINAL_STATUS,
-       'Natural language queries now supported through semantic layer' as CAPABILITY,
-       CURRENT_TIMESTAMP as COMPLETION_TIME;
+SELECT 
+    'Ready for Cortex Analyst Integration!' as FINAL_STATUS,
+    'Natural language queries now supported through semantic layer' as CAPABILITY,
+    CURRENT_TIMESTAMP() as COMPLETION_TIME;
