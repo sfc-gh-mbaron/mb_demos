@@ -1,5 +1,10 @@
 -- Setup script for RDF to Snowflake Semantic Views Demo
 -- This script sets up the environment and creates the necessary Python UDFs
+-- Includes MFA token caching configuration for improved user experience
+
+-- Enable MFA token caching to reduce authentication prompts during demo
+-- This improves user experience by caching MFA tokens for up to 4 hours
+ALTER ACCOUNT SET ALLOW_CLIENT_MFA_CACHING = TRUE;
 
 -- Set up the database and schema
 CREATE DATABASE IF NOT EXISTS RDF_SEMANTIC_DB;
@@ -90,7 +95,8 @@ $$
 $$;
 
 -- Test the setup
-SELECT 'RDF to Snowflake Semantic Views environment setup completed successfully!' as STATUS;
+SELECT 'RDF to Snowflake Semantic Views environment setup completed successfully!' as STATUS,
+       'MFA token caching enabled - reduced authentication prompts for 4 hours' as MFA_STATUS;
 
 -- Display current database and schema context
 SELECT 

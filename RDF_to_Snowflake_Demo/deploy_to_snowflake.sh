@@ -78,11 +78,6 @@ fi
 echo -e "${GREEN}Starting deployment...${NC}"
 echo
 
-# Step 0: Enable MFA Token Caching (reduces authentication prompts)
-echo -e "${BLUE}=== STEP 0: Enabling MFA Token Caching ===${NC}"
-echo "This step will enable MFA token caching to reduce authentication prompts during deployment."
-execute_sql_file "setup_mfa_caching.sql" "MFA Token Caching Setup"
-
 # Step 1: Create Python UDFs
 echo -e "${BLUE}=== STEP 1: Creating Python UDFs ===${NC}"
 execute_sql_file "python_udfs/rdf_parser_udf.sql" "RDF Parser UDF"
@@ -114,7 +109,7 @@ echo -e "${BLUE}What's been created in your account:${NC}"
 echo "  • Database: $SNOWFLAKE_DATABASE"
 echo "  • Schema: $SNOWFLAKE_SCHEMA"
 echo "  • Warehouse: $SNOWFLAKE_WAREHOUSE"
-echo "  • MFA token caching enabled (reduced authentication prompts)"
+echo "  • MFA token caching enabled automatically (4-hour sessions)"
 echo "  • Python UDFs for RDF processing"
 echo "  • Semantic views (SV_*)"
 echo "  • Sample data and relationships"

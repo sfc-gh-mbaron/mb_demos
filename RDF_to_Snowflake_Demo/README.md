@@ -47,6 +47,7 @@ Before running this demo, you will need:
 - `CREATE FUNCTION` privileges for Python UDFs
 - `CREATE VIEW` privileges for semantic views
 - `USAGE` privilege on a warehouse
+- `ALTER ACCOUNT` privileges (for MFA token caching configuration)
 
 ## Setup
 
@@ -82,27 +83,17 @@ export SNOWSQL_SCHEMA=<your-schema>
 export SNOWSQL_WAREHOUSE=<your-warehouse>
 ```
 
-**🔐 For MFA Users**: If you have MFA enabled, see the [MFA Caching Guide](MFA_CACHING_GUIDE.md) to enable token caching and reduce authentication prompts during demo execution.
+**🔐 MFA Users**: The demo automatically configures MFA token caching during setup to reduce authentication prompts. Tokens are cached securely for up to 4 hours, dramatically improving the demo experience.
 
 ### Step 3: Set Up Snowflake Environment
 
-Run the setup script to create the necessary database, schema, and supporting objects:
+Run the setup script to create the necessary database, schema, and supporting objects. This also configures MFA token caching for improved user experience:
 
 ```bash
 snowsql -f sql/01_setup_environment.sql
 ```
 
 ## Demo Steps
-
-### Step 0: Enable MFA Token Caching (Optional but Recommended)
-
-For users with MFA enabled, reduce authentication prompts by enabling token caching:
-
-```bash
-snowsql -f setup_mfa_caching.sql
-```
-
-This enables MFA token caching for up to 4 hours, significantly reducing MFA prompts during demo execution.
 
 ### Step 1: Deploy Python UDFs
 
@@ -178,6 +169,13 @@ snowsql -f examples/advanced_features.sql
 - Performance-optimized table structures
 - Enterprise-grade security and governance
 
+### 🔐 **MFA Token Caching**
+- Automatic MFA token caching configuration during setup
+- Reduces authentication prompts from multiple per session to once per 4 hours
+- Secure token storage in OS-level keystores (Windows Credential Manager, macOS Keychain, Linux Secret Service)
+- Compatible with SnowSQL, Python Connector, JDBC, and ODBC connections
+- Maintains enterprise security standards while improving user experience
+
 ## Sample Natural Language Queries
 
 With the semantic views, users can ask business questions in natural language using Cortex Analyst:
@@ -208,10 +206,8 @@ RDF_to_Snowflake_Demo/
 ├── README.md                          # This file
 ├── LICENSE                            # Apache 2.0 license
 ├── LEGAL.md                          # Legal notices
-├── MFA_CACHING_GUIDE.md              # MFA token caching configuration
 ├── environment.yml                    # Conda environment
 ├── requirements.txt                   # Python requirements
-├── setup_mfa_caching.sql             # MFA caching setup script
 ├── images/                           # Documentation assets
 ├── sample_data/                      # Sample RDF schemas and data
 │   ├── ecommerce_schema.ttl         # E-commerce schema in Turtle
@@ -268,9 +264,50 @@ snowsql -f cleanup_demo.sql
 
 This demo represents a complete implementation of semantic data processing, from RDF ingestion through to natural language business intelligence, showcasing the full power of Snowflake's semantic layer for modern data applications.
 
+## MFA Configuration Details
+
+The demo automatically configures MFA token caching using the `ALLOW_CLIENT_MFA_CACHING` account parameter. This provides several benefits:
+
+### How It Works
+- **Duration**: MFA tokens are cached for up to 4 hours
+- **Storage**: Tokens are encrypted and stored in OS-level secure keystores
+- **Compatibility**: Works with SnowSQL, Python Connector, JDBC, and ODBC
+- **Security**: Maintains enterprise security standards with automatic token expiration
+
+### For Advanced Configuration
+If you need to customize MFA behavior:
+
+```sql
+-- Check current MFA caching status
+SHOW PARAMETERS LIKE 'ALLOW_CLIENT_MFA_CACHING' IN ACCOUNT;
+
+-- Disable MFA caching if needed (not recommended for demos)
+ALTER ACCOUNT UNSET ALLOW_CLIENT_MFA_CACHING;
+
+-- Monitor MFA token usage
+SELECT EVENT_TIMESTAMP, USER_NAME, SECOND_AUTHENTICATION_FACTOR
+FROM SNOWFLAKE.ACCOUNT_USAGE.LOGIN_HISTORY 
+WHERE SECOND_AUTHENTICATION_FACTOR = 'MFA_TOKEN'
+ORDER BY EVENT_TIMESTAMP DESC;
+```
+
+### Python Connection with MFA Caching
+```python
+import snowflake.connector
+
+conn = snowflake.connector.connect(
+    account='your-account',
+    user='your-username',
+    password='your-password',
+    authenticator='username_password_mfa',  # Enables MFA caching
+    database='RDF_SEMANTIC_DB'
+)
+```
+
 ## Additional Resources
 
 - [Snowflake Semantic Views Documentation](https://docs.snowflake.com/en/user-guide/views-semantic/overview)
+- [Snowflake MFA Documentation](https://docs.snowflake.com/en/user-guide/security-mfa.html)
 - [Cortex Analyst Documentation](https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-analyst)
 - [Snowpark Python Developer Guide](https://docs.snowflake.com/en/developer-guide/snowpark/python/index)
 - [RDF and Semantic Web Primer](https://www.w3.org/RDF/)
