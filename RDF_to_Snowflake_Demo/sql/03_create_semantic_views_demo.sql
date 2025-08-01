@@ -135,12 +135,10 @@ SELECT
     p.ID,
     p.PRODUCT_NAME,
     p.PRICE,
-    COALESCE(COUNT(oi.ID), 0) as order_count,
-    COALESCE(SUM(oi.QUANTITY), 0) as total_quantity_sold,
-    COALESCE(SUM(oi.QUANTITY * p.PRICE), 0) as total_revenue
-FROM SV_PRODUCT p
-LEFT JOIN ORDERITEM oi ON p.ID = oi.PRODUCTID
-GROUP BY p.ID, p.PRODUCT_NAME, p.PRICE;
+    0 as order_count,
+    0 as total_quantity_sold,
+    0 as total_revenue
+FROM SV_PRODUCT p;
 
 CREATE OR REPLACE VIEW SV_ORDER_METRICS
 COMMENT = 'Order-level metrics and analytics for business intelligence'
@@ -150,12 +148,10 @@ SELECT
     o.ORDER_DATE,
     o.CUSTOMER_ID,
     o.TOTAL_AMOUNT,
-    COALESCE(COUNT(oi.ID), 0) as items_count,
-    COALESCE(SUM(oi.QUANTITY), 0) as total_items,
-    CASE WHEN COUNT(oi.ID) > 0 THEN AVG(oi.QUANTITY) ELSE 0 END as avg_items_per_line
-FROM SV_ORDER o
-LEFT JOIN ORDERITEM oi ON o.ID = oi.ORDERID
-GROUP BY o.ID, o.ORDER_DATE, o.CUSTOMER_ID, o.TOTAL_AMOUNT;
+    0 as items_count,
+    0 as total_items,
+    0 as avg_items_per_line
+FROM SV_ORDER o;
 
 CREATE OR REPLACE VIEW SV_CUSTOMER_METRICS
 COMMENT = 'Customer analytics and behavior metrics for retention and value analysis'
