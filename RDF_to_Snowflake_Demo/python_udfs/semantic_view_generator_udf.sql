@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION generate_semantic_view_ddl(
 )
 RETURNS VARIANT
 LANGUAGE PYTHON
-RUNTIME_VERSION = '3.8'
+RUNTIME_VERSION = '3.9'
 HANDLER = 'generate_ddl'
 AS
 $$
@@ -151,9 +151,10 @@ def generate_base_table_ddl(class_info, schema_info, target_schema):
         "UPDATED_AT TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP"
     ])
     
+    columns_str = ',\n    '.join(columns)
     ddl = f"""
 CREATE OR REPLACE TABLE {target_schema}.{table_name} (
-    {',\\n    '.join(columns)},
+    {columns_str},
     PRIMARY KEY (ID)
 );
 """
@@ -178,10 +179,11 @@ def generate_semantic_view_for_class(class_info, schema_info, target_schema):
             label = prop.get('label', prop['local_name'])
             select_columns.append(f"{col_name} -- {label}")
     
+    select_columns_str = ',\n    '.join(select_columns)
     ddl = f"""
 CREATE OR REPLACE VIEW {target_schema}.{view_name} AS
 SELECT 
-    {',\\n    '.join(select_columns)},
+    {select_columns_str},
     CREATED_AT,
     UPDATED_AT
 FROM {target_schema}.{table_name}
