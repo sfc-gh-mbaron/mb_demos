@@ -121,10 +121,10 @@ AS
 SELECT 
     ID,
     SUBJECT_URI,
-    RELATIONSHIP_TYPE,
+    PREDICATE_URI,
     OBJECT_URI,
-    CREATED_AT,
-    UPDATED_AT
+    RELATIONSHIP_TYPE,
+    CREATED_AT
 FROM RELATIONSHIPS;
 
 -- Create analytical views for business metrics
