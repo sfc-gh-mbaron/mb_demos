@@ -61,7 +61,7 @@ This demo showcases a complete solution for converting RDF (Resource Description
 - Extracts classes, properties, and relationships
 - Returns structured schema information
 
-#### `GENERATE_SEMANTIC_VIEW_DDL(schema_info, database, schema)`
+#### `GENERATE_SEMANTIC_VIEW_DDL(schema_info, database, schema, semantic_view_name)`
 - Generates Snowflake DDL from parsed RDF
 - Creates tables for RDF classes
 - Creates views with semantic annotations

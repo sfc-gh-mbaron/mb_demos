@@ -4,7 +4,8 @@
 CREATE OR REPLACE FUNCTION generate_semantic_view_ddl(
     schema_info VARIANT,
     target_database STRING DEFAULT 'RDF_SEMANTIC_DB',
-    target_schema STRING DEFAULT 'SEMANTIC_VIEWS'
+    target_schema STRING DEFAULT 'SEMANTIC_VIEWS',
+    semantic_view_name STRING DEFAULT 'MAIN_SEMANTIC_VIEW'
 )
 RETURNS VARIANT
 LANGUAGE PYTHON
@@ -15,7 +16,7 @@ $$
 import json
 import re
 
-def generate_ddl(schema_info, target_database='RDF_SEMANTIC_DB', target_schema='SEMANTIC_VIEWS'):
+def generate_ddl(schema_info, target_database='RDF_SEMANTIC_DB', target_schema='SEMANTIC_VIEWS', semantic_view_name='MAIN_SEMANTIC_VIEW'):
     """
     Generate Snowflake semantic view DDL from parsed RDF schema information
     
@@ -23,6 +24,7 @@ def generate_ddl(schema_info, target_database='RDF_SEMANTIC_DB', target_schema='
         schema_info (dict): Parsed RDF schema information
         target_database (str): Target Snowflake database name
         target_schema (str): Target Snowflake schema name
+        semantic_view_name (str): Name for the main semantic view
     
     Returns:
         dict: Generated DDL statements and metadata
@@ -39,7 +41,8 @@ def generate_ddl(schema_info, target_database='RDF_SEMANTIC_DB', target_schema='
                 'total_views': 0,
                 'total_relationships': 0,
                 'target_database': target_database,
-                'target_schema': target_schema
+                'target_schema': target_schema,
+                'semantic_view_name': semantic_view_name
             }
         }
         
@@ -84,7 +87,7 @@ def generate_ddl(schema_info, target_database='RDF_SEMANTIC_DB', target_schema='
         result['ddl_statements'].extend(hierarchy_ddl)
         
         # Generate master semantic model view
-        master_view_ddl = generate_master_semantic_view(schema_info, target_schema)
+        master_view_ddl = generate_master_semantic_view(schema_info, target_schema, semantic_view_name)
         result['ddl_statements'].append(master_view_ddl)
         
         return result
@@ -281,10 +284,10 @@ COMMENT = 'Hierarchical view of RDF class relationships'
     
     return ddl_statements
 
-def generate_master_semantic_view(schema_info, target_schema):
+def generate_master_semantic_view(schema_info, target_schema, semantic_view_name='SV_MASTER_SEMANTIC_MODEL'):
     """Generate a master view that unifies all semantic information"""
     ddl = f"""
-CREATE OR REPLACE VIEW {target_schema}.SV_MASTER_SEMANTIC_MODEL AS
+CREATE OR REPLACE VIEW {target_schema}.{semantic_view_name} AS
 SELECT 
     'CLASS' as ENTITY_TYPE,
     URI as ENTITY_URI,

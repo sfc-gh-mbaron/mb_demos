@@ -250,10 +250,10 @@ SELECT '=== Cortex Analyst Integration Preparation ===' as DEMO_STATUS;
 -- Create sample natural language query examples for Cortex Analyst
 SELECT 
     'Cortex Analyst Natural Language Query Examples:' as FEATURE_TYPE,
-    'What was our total revenue?' as EXAMPLE_QUERY_1,
-    'Show me top customers by orders' as EXAMPLE_QUERY_2,
+       'What was our total revenue?' as EXAMPLE_QUERY_1,
+       'Show me top customers by orders' as EXAMPLE_QUERY_2,
     'Which products are selling best?' as EXAMPLE_QUERY_3,
-    'Compare sales by month' as EXAMPLE_QUERY_4,
+       'Compare sales by month' as EXAMPLE_QUERY_4,
     'What are our most popular categories?' as EXAMPLE_QUERY_5;
 
 -- ================================================================
@@ -308,5 +308,5 @@ SELECT
 
 SELECT 
     'Ready for Cortex Analyst Integration!' as FINAL_STATUS,
-    'Natural language queries now supported through semantic layer' as CAPABILITY,
+       'Natural language queries now supported through semantic layer' as CAPABILITY,
     CURRENT_TIMESTAMP() as COMPLETION_TIME;
