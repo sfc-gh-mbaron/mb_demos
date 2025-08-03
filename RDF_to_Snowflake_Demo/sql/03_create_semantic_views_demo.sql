@@ -2,6 +2,9 @@
 -- This script demonstrates semantic views using standard Snowflake syntax
 -- Compatible with Cortex Analyst for natural language queries
 
+-- Set the correct Snowflake context
+USE ROLE SYSADMIN;
+USE WAREHOUSE RDF_DEMO_WH;
 USE DATABASE RDF_SEMANTIC_DB;
 USE SCHEMA SEMANTIC_VIEWS;
 

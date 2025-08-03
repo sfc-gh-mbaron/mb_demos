@@ -1,6 +1,12 @@
 -- Python UDF for loading RDF instance data into Snowflake semantic tables
 -- This UDF converts RDF triples into structured data for the semantic views
 
+-- Set the correct Snowflake context
+USE ROLE SYSADMIN;
+USE WAREHOUSE RDF_DEMO_WH;
+USE DATABASE RDF_SEMANTIC_DB;
+USE SCHEMA SEMANTIC_VIEWS;
+
 CREATE OR REPLACE FUNCTION load_rdf_data(
     rdf_content STRING,
     format STRING DEFAULT 'turtle',

@@ -1,6 +1,12 @@
 -- Python UDF for parsing RDF schemas and extracting semantic information
 -- This UDF handles multiple RDF serialization formats (Turtle, JSON-LD, N-Triples)
 
+-- Set the correct Snowflake context
+USE ROLE SYSADMIN;
+USE WAREHOUSE RDF_DEMO_WH;
+USE DATABASE RDF_SEMANTIC_DB;
+USE SCHEMA SEMANTIC_VIEWS;
+
 CREATE OR REPLACE FUNCTION parse_rdf_schema(rdf_content STRING, format STRING DEFAULT 'turtle')
 RETURNS VARIANT
 LANGUAGE PYTHON

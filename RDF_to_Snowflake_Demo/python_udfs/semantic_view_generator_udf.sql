@@ -1,6 +1,12 @@
 -- Python UDF for generating Snowflake semantic view DDL from RDF schema
 -- This UDF converts parsed RDF schema information into Snowflake semantic view definitions
 
+-- Set the correct Snowflake context
+USE ROLE SYSADMIN;
+USE WAREHOUSE RDF_DEMO_WH;
+USE DATABASE RDF_SEMANTIC_DB;
+USE SCHEMA SEMANTIC_VIEWS;
+
 CREATE OR REPLACE FUNCTION generate_semantic_view_ddl(
     schema_info VARIANT,
     target_database STRING DEFAULT 'RDF_SEMANTIC_DB',

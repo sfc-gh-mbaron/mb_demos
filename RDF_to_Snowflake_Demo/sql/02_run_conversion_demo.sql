@@ -1,6 +1,9 @@
 -- Main conversion demo script
 -- This script demonstrates the complete RDF to Snowflake semantic views conversion process
 
+-- Set the correct Snowflake context
+USE ROLE SYSADMIN;
+USE WAREHOUSE RDF_DEMO_WH;
 USE DATABASE RDF_SEMANTIC_DB;
 USE SCHEMA SEMANTIC_VIEWS;
 

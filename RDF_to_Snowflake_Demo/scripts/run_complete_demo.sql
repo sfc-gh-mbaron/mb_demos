@@ -7,11 +7,22 @@
 
 SELECT '=== Starting RDF to Snowflake Semantic Views Demo ===' as DEMO_STATUS;
 
+-- Set the correct Snowflake context
+USE ROLE SYSADMIN;
+
 -- Set up the environment
 CREATE DATABASE IF NOT EXISTS RDF_SEMANTIC_DB;
 USE DATABASE RDF_SEMANTIC_DB;
 CREATE SCHEMA IF NOT EXISTS SEMANTIC_VIEWS;
 USE SCHEMA SEMANTIC_VIEWS;
+
+-- Create and use warehouse for UDF processing
+CREATE WAREHOUSE IF NOT EXISTS RDF_DEMO_WH
+WITH WAREHOUSE_SIZE = 'SMALL'
+     AUTO_SUSPEND = 60
+     AUTO_RESUME = TRUE
+     INITIALLY_SUSPENDED = FALSE;
+USE WAREHOUSE RDF_DEMO_WH;
 
 -- ================================================================
 -- PART 2: CREATE PYTHON UDFs FOR RDF PROCESSING
