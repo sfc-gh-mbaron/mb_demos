@@ -98,7 +98,7 @@ def generate_supporting_tables(schema_info, target_schema):
                 
                 column_def = f"{col_name} {col_type}"
                 if col_comment:
-                    column_def += f" COMMENT '{escape_sql_string(col_comment)}'"
+                    column_def += f" COMMENT = '{escape_sql_string(col_comment)}'"
                 columns.append(column_def)
         
         # Add metadata columns

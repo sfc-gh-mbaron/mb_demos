@@ -21,7 +21,7 @@ WITH schema_parse AS (
     WHERE SCHEMA_NAME = 'E-commerce Domain Model' 
     LIMIT 1
 )
-SELECT GENERATE_SNOWFLAKE_SEMANTIC_VIEW(schema_data) as SEMANTIC_DDL_RESULT
+SELECT GENERATE_SNOWFLAKE_SEMANTIC_VIEW(schema_data, 'RDF_SEMANTIC_DB', 'SEMANTIC_VIEWS', 'SV_ECOMMERCE_SEMANTIC_MODEL') as SEMANTIC_DDL_RESULT
 FROM schema_parse;
 
 -- ================================================================
