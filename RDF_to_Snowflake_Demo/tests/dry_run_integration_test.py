@@ -163,15 +163,22 @@ class DryRunIntegrationTest:
             'CUSTOMER', 'ORDER_', 'SUPPLIER', 'ORDERITEM'
         ]
         
-        # Check that all semantic views are created  
+        # Check that all standard views are created  
         required_views = [
             'SV_PRODUCT', 'SV_CATEGORY', 'SV_CUSTOMER', 'SV_ORDER',
             'SV_SUPPLIER', 'SV_ORDERITEM', 'SV_PRODUCT_METRICS',
             'SV_ORDER_METRICS', 'SV_CUSTOMER_METRICS'
         ]
         
+        # Check that Snowflake Semantic Views are created
+        required_semantic_views = [
+            'ECOMMERCE_SEMANTIC_MODEL', 'PRODUCT_ANALYTICS_MODEL', 
+            'CUSTOMER_ANALYTICS_MODEL'
+        ]
+        
         self._check_object_creation(required_tables, "TABLE")
         self._check_object_creation(required_views, "VIEW")
+        self._check_semantic_view_creation(required_semantic_views)
         
         print("✅ Data flow integrity validation completed")
     
@@ -196,6 +203,71 @@ class DryRunIntegrationTest:
             else:
                 self._add_issue("WARNING", f"Required {object_type} {obj_name} not found in scripts")
     
+    def _check_semantic_view_creation(self, semantic_view_names: List[str]):
+        """Check that required Snowflake Semantic Views are created"""
+        
+        sql_files = list(self.demo_root.glob("**/*.sql"))
+        created_semantic_views = set()
+        
+        for sql_file in sql_files:
+            with open(sql_file, 'r') as f:
+                content = f.read()
+            
+            # Find CREATE SEMANTIC VIEW statements
+            pattern = r'CREATE\s+(?:OR\s+REPLACE\s+)?SEMANTIC\s+VIEW\s+(\w+)'
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            created_semantic_views.update([match.upper() for match in matches])
+        
+        for sv_name in semantic_view_names:
+            if sv_name.upper() in created_semantic_views:
+                print(f"  ✅ SEMANTIC VIEW {sv_name}")
+            else:
+                self._add_issue("ERROR", f"Required SEMANTIC VIEW {sv_name} not found in scripts")
+                
+        # Additional semantic view validations
+        self._validate_semantic_view_components()
+    
+    def _validate_semantic_view_components(self):
+        """Validate semantic view components (dimensions, metrics, filters)"""
+        
+        sql_files = list(self.demo_root.glob("**/*.sql"))
+        
+        for sql_file in sql_files:
+            with open(sql_file, 'r') as f:
+                content = f.read()
+            
+            # Check for required semantic view components
+            if 'CREATE' in content.upper() and 'SEMANTIC VIEW' in content.upper():
+                # Check for DIMENSIONS section
+                if 'DIMENSIONS' in content.upper():
+                    print(f"  ✅ SEMANTIC VIEW has DIMENSIONS section")
+                else:
+                    self._add_issue("WARNING", f"Semantic view missing DIMENSIONS section in {sql_file.name}")
+                
+                # Check for METRICS section
+                if 'METRICS' in content.upper():
+                    print(f"  ✅ SEMANTIC VIEW has METRICS section")
+                else:
+                    self._add_issue("WARNING", f"Semantic view missing METRICS section in {sql_file.name}")
+                
+                # Check for synonyms (important for Cortex Analyst)
+                if 'synonyms' in content.lower():
+                    print(f"  ✅ SEMANTIC VIEW includes synonyms for natural language queries")
+                else:
+                    self._add_issue("WARNING", f"Semantic view missing synonyms in {sql_file.name}")
+                
+                # Check for sample values (helps Cortex Analyst)
+                if 'sample_values' in content.lower():
+                    print(f"  ✅ SEMANTIC VIEW includes sample values for AI guidance")
+                else:
+                    self._add_issue("INFO", f"Semantic view could benefit from sample values in {sql_file.name}")
+                
+                # Check for relationships (critical for joins)
+                if 'RELATIONSHIPS' in content.upper():
+                    print(f"  ✅ SEMANTIC VIEW defines table relationships")
+                else:
+                    self._add_issue("WARNING", f"Semantic view missing RELATIONSHIPS section in {sql_file.name}")
+    
     def _test_workflow_simulation(self):
         """Simulate the complete workflow logic"""
         print("\n🎭 TESTING WORKFLOW SIMULATION")
@@ -209,7 +281,10 @@ class DryRunIntegrationTest:
             "DDL Generation (Structured data → SQL)",
             "Table Creation (Physical data model)",
             "Data Loading (Sample data insertion)",
-            "Semantic View Creation (Business intelligence layer)",
+            "Standard View Creation (Traditional BI views)",
+            "Snowflake Semantic View Creation (Native semantic models)",
+            "Semantic SQL Query Demonstration (SELECT * FROM SEMANTIC_VIEW syntax)",
+            "Cortex Analyst Readiness (Natural language query preparation)",
             "Analytics Views (Metrics and aggregations)"
         ]
         

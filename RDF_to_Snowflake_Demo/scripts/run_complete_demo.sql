@@ -607,9 +607,166 @@ FROM SV_RELATIONSHIPS
 GROUP BY RELATIONSHIP_TYPE
 ORDER BY COUNT DESC;
 
+-- ================================================================
+-- PART 7: CREATE SNOWFLAKE SEMANTIC VIEWS FOR CORTEX ANALYST
+-- ================================================================
+
+SELECT '=== Creating Snowflake Semantic Views for Cortex Analyst ===' as DEMO_STATUS;
+
+-- Drop existing semantic views if they exist
+DROP SEMANTIC VIEW IF EXISTS ECOMMERCE_SEMANTIC_MODEL;
+
+-- Create the main E-commerce Semantic View
+CREATE OR REPLACE SEMANTIC VIEW ECOMMERCE_SEMANTIC_MODEL
+(
+    TABLES (
+        PRODUCT primary key (ID),
+        CATEGORY primary key (ID), 
+        CUSTOMER primary key (ID),
+        ORDER_ as ORDER_TABLE primary key (ID),
+        ORDERITEM primary key (ID)
+    ),
+
+    RELATIONSHIPS (
+        ORDERITEM(ORDERID) references ORDER_TABLE(ID) as ORDERITEM_TO_ORDER,
+        ORDERITEM(PRODUCTID) references PRODUCT(ID) as ORDERITEM_TO_PRODUCT,
+        ORDER_TABLE(CUSTOMERID) references CUSTOMER(ID) as ORDER_TO_CUSTOMER
+    ),
+
+    DIMENSIONS (
+        PRODUCT.PRODUCTNAME as PRODUCT_NAME 
+            synonyms ('product', 'item', 'merchandise', 'goods') 
+            description 'Name of the product available for purchase'
+            sample_values ('Laptop', 'Mouse', 'Keyboard', 'Cable'),
+        
+        CATEGORY.CATEGORYNAME as CATEGORY_NAME
+            synonyms ('category', 'type', 'classification') 
+            description 'Product category for classification'
+            sample_values ('Electronics', 'Computers', 'Accessories'),
+            
+        CUSTOMER.CUSTOMERNAME as CUSTOMER_NAME
+            synonyms ('customer', 'client', 'buyer') 
+            description 'Name of the customer'
+            sample_values ('John Smith', 'Jane Doe', 'Bob Johnson'),
+            
+        ORDER_TABLE.ORDERDATE as ORDER_DATE
+            synonyms ('order date', 'purchase date', 'transaction date') 
+            description 'Date when the order was placed'
+    ),
+
+    METRICS (
+        SUM(ORDER_TABLE.TOTAL_AMOUNT) as TOTAL_REVENUE
+            synonyms ('revenue', 'sales', 'total sales', 'income')
+            description 'Total revenue from all orders',
+            
+        COUNT(ORDER_TABLE.ID) as ORDER_COUNT
+            synonyms ('number of orders', 'order count', 'total orders')
+            description 'Total number of orders placed',
+            
+        SUM(ORDERITEM.QUANTITY) as TOTAL_QUANTITY_SOLD
+            synonyms ('total quantity', 'items sold', 'units sold')
+            description 'Total quantity of all items sold',
+            
+        AVG(ORDER_TABLE.TOTAL_AMOUNT) as AVERAGE_ORDER_VALUE
+            synonyms ('AOV', 'average order value', 'avg order')
+            description 'Average monetary value per order'
+    ),
+
+    FILTERS (
+        high_value_orders: ORDER_TABLE.TOTAL_AMOUNT > 100
+            synonyms ('expensive orders', 'high value orders')
+            description 'Orders with total amount greater than $100',
+            
+        recent_orders: ORDER_TABLE.ORDERDATE >= DATEADD('day', -30, CURRENT_DATE())
+            synonyms ('recent orders', 'last 30 days')
+            description 'Orders placed in the last 30 days'
+    )
+);
+
+-- ================================================================
+-- PART 8: DEMONSTRATE SEMANTIC SQL QUERIES
+-- ================================================================
+
+SELECT '=== Demonstrating Semantic SQL Queries ===' as DEMO_STATUS;
+
+-- Show all semantic views
+SHOW SEMANTIC VIEWS;
+
+-- Query 1: Basic semantic view query
+SELECT '--- Basic Revenue and Order Analysis ---' as QUERY_TYPE;
+SELECT * FROM SEMANTIC_VIEW(
+    ECOMMERCE_SEMANTIC_MODEL
+    DIMENSIONS (
+        PRODUCT_NAME,
+        CATEGORY_NAME,
+        CUSTOMER_NAME
+    )
+    METRICS (
+        TOTAL_REVENUE,
+        ORDER_COUNT,
+        AVERAGE_ORDER_VALUE
+    )
+) 
+LIMIT 10;
+
+-- Query 2: High-value orders analysis
+SELECT '--- High-Value Orders Analysis ---' as QUERY_TYPE;
+SELECT * FROM SEMANTIC_VIEW(
+    ECOMMERCE_SEMANTIC_MODEL
+    DIMENSIONS (
+        CUSTOMER_NAME,
+        ORDER_DATE
+    )
+    METRICS (
+        TOTAL_REVENUE,
+        TOTAL_QUANTITY_SOLD
+    )
+    WHERE high_value_orders
+)
+ORDER BY TOTAL_REVENUE DESC
+LIMIT 5;
+
+-- Query 3: Product performance metrics
+SELECT '--- Product Performance Analysis ---' as QUERY_TYPE;
+SELECT * FROM SEMANTIC_VIEW(
+    ECOMMERCE_SEMANTIC_MODEL
+    DIMENSIONS (
+        PRODUCT_NAME,
+        CATEGORY_NAME
+    )
+    METRICS (
+        ORDER_COUNT,
+        TOTAL_QUANTITY_SOLD
+    )
+)
+ORDER BY TOTAL_QUANTITY_SOLD DESC
+LIMIT 5;
+
+-- ================================================================
+-- CORTEX ANALYST READINESS VERIFICATION
+-- ================================================================
+
+SELECT '=== Cortex Analyst Readiness Verification ===' as DEMO_STATUS;
+
+-- Show semantic dimensions available for natural language queries
+SHOW SEMANTIC DIMENSIONS FOR SEMANTIC VIEW ECOMMERCE_SEMANTIC_MODEL;
+
+-- Show semantic metrics available for natural language queries
+SHOW SEMANTIC METRICS FOR SEMANTIC VIEW ECOMMERCE_SEMANTIC_MODEL;
+
+-- Natural language query examples that Cortex Analyst can now answer:
+SELECT 
+    'Natural Language Queries Now Supported:' as FEATURE,
+    'What is our total revenue?' as EXAMPLE_1,
+    'Show me the top-selling products by quantity' as EXAMPLE_2,
+    'Which customers have the highest order values?' as EXAMPLE_3,
+    'What are our most popular product categories?' as EXAMPLE_4,
+    'How many high-value orders do we have?' as EXAMPLE_5;
+
 -- Final success message
 SELECT 
     '=== RDF to Snowflake Semantic Views Demo Completed Successfully! ===' as DEMO_COMPLETION,
+    'Cortex Analyst Ready!' as AI_STATUS,
     CURRENT_TIMESTAMP as COMPLETION_TIME;
 
 -- Show created objects
